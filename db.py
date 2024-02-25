@@ -27,17 +27,10 @@ class data_base:
         print("Data Base creation ended")
 
         conn.close()
-
-    def _dict_factory(cursor, row):
-        d = {}
-        for idx, col in enumerate(cursor.description):
-            d[col[0]] = row[idx]
-        return d
     
     def get_all_users(self):
         conn = sqlite3.connect(self.name)
-        conn.row_factory = self._dict_factory
-        cur = self.conn.cursor()
+        cur = conn.cursor()
         sql_command = f'''SELECT * FROM {self.users_table}'''
         users = cur.execute(sql_command).fetchall()
         conn.close()
