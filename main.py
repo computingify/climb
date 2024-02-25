@@ -1,13 +1,17 @@
-# Import des modules et fonctions Flask
 import flask
 from flask import request, jsonify
-
-# Import de SQLite
 import sqlite3
+import db
+from datetime import datetime
+import re
+from email_validator import validate_email, EmailNotValidError
 
-# Instantiation de l'application
+# Micro REST API creation
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
+
+# Create Data Base object
+db = db.data_base()
 
 # Definition du format de sortie
 def dict_factory(cursor, row):
@@ -19,17 +23,39 @@ def dict_factory(cursor, row):
 # definition de l'ensemble des routes prises en charge par l'API
 @app.route('/', methods=['GET'])
 def home():
-     return '''<h1>Annuaire des employés</h1>
- <p>Prototype d'une API d'accès à la table employees de la base de données Chinook.</p>'''
+     return f'''<h1>Annuaire des employés</h1>
+ <p>Prototype d'une API d'accès à la table employees de la base de données {db_name}.</p>'''
  
-@app.route('/api/v1/resources/employees/all', methods=['GET'])
-def api_all():
-    conn = sqlite3.connect('chinook.db')
-    conn.row_factory = dict_factory
-    cur = conn.cursor()
-    all_employees = cur.execute('SELECT * FROM employees').fetchall()
-    conn.close()
-    return jsonify(all_employees)
+@app.route('/api/v1/resources/users/all', methods=['GET'])
+def api_get_all_users():
+    return jsonify(db.get_all_users())
+
+@app.route('/api/v1/resources/user', methods=['PUT'])
+def api_add_user():
+    query_parameters = request.args
+    print(f"parameters {query_parameters}")
+    first_name = query_parameters.get('FirstName').capitalize()
+    last_name = query_parameters.get('LastName').capitalize()
+
+    # Validate the birth date format
+    birth_date_str = query_parameters.get('BirthDate')
+    if not re.match(r'^\d{4}-\d{2}-\d{2}$', birth_date_str):
+        return jsonify({'error': 'Invalid birth date format. Expected yyyy-mm-dd.'}), 400
+
+    # Convert the birth date string to a datetime object
+    birth_date = datetime.strptime(birth_date_str, "%Y-%m-%d")
+
+    # Validate the email address format (if provided)
+    email = query_parameters.get('email')
+    if email:
+        try:
+            validate_email(email)
+        except EmailNotValidError:
+            return jsonify({'error': 'Invalid email address format.'}), 400
+
+    user_data = (first_name, last_name, birth_date, email)
+    db.create_user(user_data)
+    return jsonify("success")
 
 def page_not_found(e):
     """ Fonction utilisée si la mauvaise route est spécifiée par un(e) utilisateur(-trice)"""
@@ -55,7 +81,7 @@ def api_filter():
         query += ' AND city=?'
         to_filter.append(city)
 
-    conn = sqlite3.connect('chinook.db')
+    conn = sqlite3.connect(db_name)
     conn.row_factory = dict_factory
     cur = conn.cursor()
     print(f"query = {query}")
@@ -81,7 +107,7 @@ def api_add_presence():
     new_presence = 1
 
     # Execute the SQL statement with the specified parameters
-    conn = sqlite3.connect('chinook.db')
+    conn = sqlite3.connect(db_name)
     cur = conn.cursor()
     cur.execute(sql, (new_presence, firstname, lastname))
 
