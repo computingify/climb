@@ -34,8 +34,16 @@ def api_get_all_users():
 def api_add_user():
     query_parameters = request.args
     print(f"parameters {query_parameters}")
+
+    # Check if the FirstName and LastName contain only allowed characters
     first_name = query_parameters.get('FirstName').capitalize()
     last_name = query_parameters.get('LastName').capitalize()
+    if not re.match(r'^[a-zA-Z-]+$', first_name) or not re.match(r'^[a-zA-Z-]+$', last_name):
+        return jsonify({'error': 'FirstName and LastName must contain only letters and hyphens.'}), 400
+
+    # Check if the FirstName and LastName exceed the maximum length
+    if len(first_name) > 16 or len(last_name) > 16:
+        return jsonify({'error': 'FirstName and LastName must be 16 characters or less.'}), 400
 
     # Validate the birth date format
     birth_date_str = query_parameters.get('BirthDate')
@@ -53,6 +61,7 @@ def api_add_user():
         except EmailNotValidError:
             return jsonify({'error': 'Invalid email address format.'}), 400
 
+    # Store data into DB
     user_data = (first_name, last_name, birth_date, email)
     db.create_user(user_data)
     return jsonify("success")
