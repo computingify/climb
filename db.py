@@ -36,6 +36,15 @@ class data_base:
         conn.close()
         return users
     
+    def get_user(self, user_data):
+        conn = sqlite3.connect(self.name)
+        cur = conn.cursor()
+        sql_command = f'''SELECT * FROM {self.users_table} WHERE 1=1 AND FirstName=? AND LastName=?'''
+        users = cur.execute(sql_command, user_data).fetchall()
+        conn.close()
+        return users
+
+    
     def create_user(self, user_data):
         conn = sqlite3.connect(self.name)
         cur = conn.cursor()
@@ -43,7 +52,7 @@ class data_base:
         # Create or update the user
         sql_command = f'''INSERT OR REPLACE INTO {self.users_table} (id, FirstName, LastName, BirthDate, email)
                     VALUES ((SELECT id FROM {self.users_table} WHERE FirstName=? AND LastName=?), ?, ?, ?, ?)'''
-        cur.execute(sql_command, (user_data[0], user_data[1], user_data[0], user_data[1], user_data[2], user_data[3]))
+        cur.execute(sql_command, (user_data.first_name, user_data.last_name, user_data.first_name, user_data.last_name, user_data.birth_date, user_data.email))
 
         conn.commit()
         conn.close()
