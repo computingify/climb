@@ -1,9 +1,14 @@
 import sqlite3
 
+class UserNotFoundError(Exception):
+    pass
+
 class data_base:
     def __init__(self) -> None:
         self.name = 'climb.db'
         self.users_table = 'users'
+        self.session_table = 'sessions'
+        self.session_attendees_table = 'session_attendees'
         self._create()
 
     def _create(self):
@@ -11,14 +16,34 @@ class data_base:
         # Create a cursor object
         cur = conn.cursor()
 
+        # Create users table
         sql_command = f'''CREATE TABLE IF NOT EXISTS {self.users_table} (
-                            id INTEGER PRIMARY KEY,
-                            FirstName TEXT,
-                            LastName TEXT,
-                            BirthDate TEXT,
-                            email TEXT
-                        )'''
-        # Create a table
+                        id INTEGER PRIMARY KEY,
+                        FirstName TEXT,
+                        LastName TEXT,
+                        BirthDate TEXT,
+                        email TEXT
+                    )'''
+        cur.execute(sql_command)
+
+        # Create sessions table
+        sql_command = f'''CREATE TABLE IF NOT EXISTS {self.session_table} (
+                        id INTEGER PRIMARY KEY,
+                        date TEXT,
+                        description TEXT
+                    )'''
+        cur.execute(sql_command)
+
+        # Create attendees table
+        cur.execute(f'''DROP TABLE IF EXISTS {self.session_attendees_table}''')
+        sql_command = f'''CREATE TABLE IF NOT EXISTS {self.session_attendees_table} (
+                        id INTEGER PRIMARY KEY,
+                        user_id INTEGER,
+                        session_id INTEGER,
+                        date TEXT,
+                        FOREIGN KEY (user_id) REFERENCES {self.users_table}(id),
+                        FOREIGN KEY (session_id) REFERENCES {self.session_table}(id)
+                    )'''
         cur.execute(sql_command)
 
         # Commit changes
@@ -55,4 +80,48 @@ class data_base:
         cur.execute(sql_command, (user_data.first_name, user_data.last_name, user_data.first_name, user_data.last_name, user_data.birth_date, user_data.email))
 
         conn.commit()
+        conn.close()
+        
+    def is_user_id_exist(self, id):
+        conn = sqlite3.connect(self.name)
+        cur = conn.cursor()
+
+        cur.execute(f"SELECT * FROM {self.users_table} WHERE id=?", id)
+        user = cur.fetchone()
+        
+        if user is None:
+            raise UserNotFoundError(f"User with ID {id} not found.")
+        
+        conn.close()
+        
+        return user
+    
+    def get_session(self, date):
+        conn = sqlite3.connect(self.name)
+        cur = conn.cursor()
+        
+        cur.execute(f"SELECT * FROM {self.session_table} WHERE date=?", (date,))
+        session = cur.fetchone()
+        
+        if session is None:
+            # Create a new session for the current day if it does not exist
+            cur.execute(f"INSERT INTO {self.session_table} (date) VALUES (?)", (date,))
+            conn.commit()
+
+            # Get the ID of the newly created session
+            session_id = cur.lastrowid
+        else:
+            session_id = session[0]
+        
+        conn.close()
+        
+        return session_id
+    
+    def add_user_to_session(self, session_id, user_id, date):
+        conn = sqlite3.connect(self.name)
+        cur = conn.cursor()
+        
+        cur.execute(f"INSERT INTO {self.session_attendees_table} (session_id, user_id, date) VALUES (?, ?, ?)", (session_id, user_id, date))
+        conn.commit()
+        
         conn.close()

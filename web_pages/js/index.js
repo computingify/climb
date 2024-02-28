@@ -1,5 +1,6 @@
 
 import addUserForm from '/js/addUser.js'
+//import createUserForm from '/js/test.js'
 
 document.addEventListener(
   'DOMContentLoaded', // permet de s'assurer que la page est totalement construite avant de lancer l'execution de ce fichier, évite ainsi l'ajout d'element au html alors qu'il n'est pas terminé de construire
@@ -7,6 +8,7 @@ document.addEventListener(
     console.log('LOADING');
 
     addUserForm();
+    //createUserForm()
   },
   { once: true },
 );

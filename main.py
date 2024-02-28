@@ -1,7 +1,6 @@
 import flask
 from flask import request, jsonify
-import sqlite3
-import db
+from db import data_base, UserNotFoundError
 from datetime import datetime
 import re
 from email_validator import validate_email, EmailNotValidError
@@ -14,14 +13,23 @@ app = flask.Flask(__name__)
 app.config["DEBUG"] = True
 
 # Create Data Base object
-db = db.data_base()
+db = data_base()
 
 # definition de l'ensemble des routes prises en charge par l'API
 @app.route('/', methods=['GET'])
 def home():
-     return f'''<h1>Annuaire des employés</h1>
- <p>Prototype d'une API d'accès à la table employees de la base de données {db_name}.</p>'''
- 
+    return flask.render_template('index.html')
+
+@app.route('/js/<path:path>')
+def send_js(path):
+    print(f"path {path}")
+    return flask.send_from_directory('web_pages/js', path)
+
+@app.route('/styles/<path:path>')
+def send_styles(path):
+    print(f"path {path}")
+    return flask.send_from_directory('web_pages/styles', path)
+
 @app.route('/api/v1/resources/users/all', methods=['GET'])
 def api_get_all_users():
     return jsonify(db.get_all_users())
@@ -48,37 +56,46 @@ def api_get_user():
 
     return jsonify(user)
 
-@app.route('/api/v1/resources/user', methods=['PUT'])
+@app.route('/api/v1/resources/user', methods=['POST'])
 def api_add_user():
     query_parameters = request.args
 
     # Validate FirstName and LastName format
-    first_name_val = query_parameters.get('FirstName')
-    last_name_val = query_parameters.get('LastName')
-    
+    first_name_val = request.form.get('FirstName')
+    last_name_val = request.form.get('LastName')
+    birth_date_str = request.form.get('BirthDate')
+    email_val = request.form.get('email')
+    print(f"first_name_val = {first_name_val} last_name_val = {last_name_val} birth_date_str = {birth_date_str} email_val = {email_val}")
+    #first_name_val = query_parameters.get('FirstName')
+    #last_name_val = query_parameters.get('LastName')
+    #birth_date_str = query_parameters.get('BirthDate')
+    #email_val = query_parameters.get('email')
+
     if first_name_val is None or last_name_val is None:
+        print('FirstName and LastName are required parameters.')
         return jsonify({'error': 'FirstName and LastName are required parameters.'}), 400
 
     try:
         first_name_val = _format_name(first_name_val)
         last_name_val = _format_name(last_name_val)
     except NameError as e:
+        print(f'error {str(e)}')
         return jsonify({'error': str(e)}), 400
     
     # Validate the birth date format (if provided)
-    birth_date_str = query_parameters.get('BirthDate')
     if birth_date_str:
         try:
             birth_date_val = _format_birth_date(birth_date_str)
         except NameError as e:
+            print(f'error {str(e)}')
             return jsonify({'error': str(e)}), 400
 
     # Validate the email address format (if provided)
-    email_val = query_parameters.get('email')
     if email_val:
         try:
             validate_email(email_val)
         except EmailNotValidError:
+            print('Invalid email address format.')
             return jsonify({'error': 'Invalid email address format.'}), 400
 
     # Store data into DB
@@ -86,6 +103,32 @@ def api_add_user():
     user_data = user_data_format(first_name=first_name_val, last_name=last_name_val, birth_date=birth_date_val, email=email_val)
     db.create_user(user_data)
     return jsonify("success")
+
+@app.route('/api/v1/resources/session/add_user', methods=['POST'])
+def api_add_user_to_session():
+    # Get the user data from the request
+    query_parameters = request.args
+    user_id = query_parameters.get('UserId')
+    try:
+        int(user_id)
+    except ValueError:
+        return jsonify({'error': 'Invalid user Id format, must be an integer.'}), 400
+
+    # Check if the user ID exists in the database
+    try:
+        db.is_user_id_exist(user_id)
+    except UserNotFoundError as e:
+        return jsonify({'error': str(e)}), 404
+
+    # Get session ID for the current day
+    today = datetime.now().date()
+    session_id = db.get_session(today)
+
+    # Assign the user to a session
+    db.add_user_to_session(session_id, user_id, datetime.now().strftime("%H:%M"))
+
+    # Return a success message
+    return jsonify({'message': 'User added to session successfully.'}), 200
 
 def page_not_found(e):
     """ Fonction utilisée si la mauvaise route est spécifiée par un(e) utilisateur(-trice)"""
