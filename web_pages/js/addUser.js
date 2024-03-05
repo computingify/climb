@@ -1,6 +1,8 @@
 export default addUserForm
 
 function addUserForm() {
+
+  console.log("Run addUserForm");
   var form = document.createElement('form');
 
   // Create the label and input elements for FirstName
@@ -21,6 +23,24 @@ function addUserForm() {
   // Append the buttonContainer to the document body
   document.body.appendChild(form);
 
+  // Initialize Tempus Dominus datetimepicker
+  $(document).ready(function() {
+    $('#BirthDate-input').datetimepicker({
+      format: 'YYYY-MM-DD', // Set the desired date format
+      viewMode: 'years',
+      showClear: true,
+      showClose: true,
+      icons: {
+        date: 'fa fa-calendar', // Set the icon for the date picker
+        up: 'fa fa-chevron-up', // Set the icon for the up button
+        down: 'fa fa-chevron-down', // Set the icon for the down button
+        previous: 'fa fa-chevron-left', // Set the icon for the previous month button
+        next: 'fa fa-chevron-right', // Set the icon for the next month button
+        clear: 'fa fa-trash', // Set the icon for the clear button
+        close: 'fa fa-times' // Set the icon for the close button
+      }
+    });
+  });
 
   // Add an event listener to the inputBirthDate element to open the calendar when clicked
   document.addEventListener('click', function(event) {
@@ -167,8 +187,9 @@ function createBirthDate(form) {
   // Create the input element for "Birth Date"
   var inputBirthDate = document.createElement('input');
   inputBirthDate.type = 'text';
-  inputBirthDate.setAttribute('data-target', '#birthdate');
   inputBirthDate.name = 'BirthDate';
+  inputBirthDate.id = 'BirthDate-input'; // Set the ID
+  inputBirthDate.className = 'form-control BirthDate-input'; // Set the class
   
   // Create a container element with a relative position
   var birthDatecontainer = document.createElement('div');
@@ -195,21 +216,3 @@ function createSubmit(form) {
   return inputSubmit;
 }
 
-$(document).ready(function() {
-  $('#birthdate').datetimepicker({
-      format: 'YYYY-MM-DD', // Set the desired date format
-      viewMode: 'years',
-      showClear: true,
-      showClose: true,
-      icons: {
-          time: 'fa fa-clock-o', // Set the icon for the time picker
-          date: 'fa fa-calendar', // Set the icon for the date picker
-          up: 'fa fa-chevron-up', // Set the icon for the up button
-          down: 'fa fa-chevron-down', // Set the icon for the down button
-          previous: 'fa fa-chevron-left', // Set the icon for the previous month button
-          next: 'fa fa-chevron-right', // Set the icon for the next month button
-          clear: 'fa fa-trash', // Set the icon for the clear button
-          close: 'fa fa-times' // Set the icon for the close button
-      }
-  });
-});
