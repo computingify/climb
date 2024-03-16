@@ -39,20 +39,26 @@ def api_get_user():
     query_parameters = request.args
 
     # Check if the FirstName and LastName contain only allowed characters
-    first_name_val = query_parameters.get('FirstName').capitalize()
-    last_name_val = query_parameters.get('LastName').capitalize()
-    if first_name_val is None or last_name_val is None:
-        return jsonify({'error': 'FirstName and LastName are required parameters.'}), 400
+    first_name_val = query_parameters.get('FirstName')
+    last_name_val = query_parameters.get('LastName')
+    id_val = query_parameters.get('Id')
+    if (first_name_val is None or last_name_val is None) and id_val is None:
+        return jsonify({'error': 'FirstName and LastName are required parameters. Or use Id'}), 400
 
     try:
-        first_name_val = _format_name(first_name_val)
-        last_name_val = _format_name(last_name_val)
+
+        if first_name_val is not None and last_name_val is not None:
+            first_name_val = _format_name(first_name_val)
+            last_name_val = _format_name(last_name_val)
+            user_data_format = namedtuple('User', ['first_name', 'last_name'])
+            user_data = user_data_format(first_name=first_name_val, last_name=last_name_val)
+            user = db.get_user(user_data)
+        elif id_val is not None:
+            _checkId(id_val)
+            user = db.is_user_id_exist(id_val)
+            
     except NameError as e:
         return jsonify({'error': str(e)}), 400
-
-    user_data_format = namedtuple('User', ['first_name', 'last_name'])
-    user_data = user_data_format(first_name=first_name_val, last_name=last_name_val)
-    user = db.get_user(user_data)
 
     return jsonify(user)
 
@@ -145,6 +151,10 @@ def _format_name(name_raw):
         raise NameError(f'FirstName and LastName must be {NAME_MAX_SIZE} characters or less.')
     
     return name
+
+def _checkId(id):
+    if not re.match(r'^[1-9]+$', id):
+        raise NameError(f'id is not in correct format')
 
 def _format_birth_date(birth_date):
     # Validate the birth date format

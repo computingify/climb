@@ -1,7 +1,12 @@
 export default addUserForm
 
 function addUserForm() {
+  // Get a reference to the <body> element
+  var body = document.body;
 
+  // Clear the content of the <body> element
+  body.innerHTML = '';
+  
   console.log("Run addUserForm");
   var form = document.createElement('form');
 
