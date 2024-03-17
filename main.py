@@ -22,12 +22,10 @@ def home():
 
 @app.route('/js/<path:path>')
 def send_js(path):
-    print(f"path {path}")
     return flask.send_from_directory('web_pages/js', path)
 
 @app.route('/styles/<path:path>')
 def send_styles(path):
-    print(f"path {path}")
     return flask.send_from_directory('web_pages/styles', path)
 
 @app.route('/api/v1/resources/users/all', methods=['GET'])

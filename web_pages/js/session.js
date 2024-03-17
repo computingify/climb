@@ -2,6 +2,7 @@ export default sessionPage
 
 import createSection from '/js/createSection.js'
 import serverCom from '/js/serverCom.js';
+import createInput from '/js/createInput.js';
 
 // Access the functions as properties of the serverCom object
 const checkUser = serverCom.checkUser;
@@ -16,17 +17,7 @@ function sessionPage() {
     const id = createSection("identifiant")
     id.value = "Identifiant"
 
-    const labelId = document.createElement('label');
-    labelId.for = 'id';
-    labelId.textContent = 'Identifiant:';
-    const inputId = document.createElement('input');
-    inputId.type = 'text';
-    inputId.id = 'id';
-    inputId.name = 'id';
-    inputId.required = true;
-
-    id.append(labelId);
-    id.append(inputId);
+    const inputId = createInput(id, 'Identifiant');
 
     const searchSec = createSection("searchBt")
     searchSec.value = "searchBt"
