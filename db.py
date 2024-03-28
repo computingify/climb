@@ -93,8 +93,15 @@ class data_base:
             raise UserNotFoundError(f"User with ID {id} not found.")
         
         conn.close()
+        ret = {
+            'id': user[0],
+            'first_name': user[1],
+            'last_name': user[2],
+            # 'brithday': user[3],
+            # 'email': user[4],
+            }
         
-        return user
+        return ret
     
     def get_session(self, date):
         conn = sqlite3.connect(self.name)

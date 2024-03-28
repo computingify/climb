@@ -113,6 +113,7 @@ def api_add_user_to_session():
     # Get the user data from the request
     query_parameters = request.args
     user_id = query_parameters.get('UserId')
+    
     try:
         int(user_id)
     except ValueError:

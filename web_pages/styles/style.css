@@ -44,3 +44,30 @@ section {
 .flavor {
   background-color: lawngreen;
 }
+/* Style for the container holding user data */
+.user-data-container {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 20px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Style for individual user data items (first name, last name, etc.) */
+.user-data-item {
+  margin: 0;
+  padding: 5px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+/* Style for first name */
+.user-data-item:first-child {
+  font-weight: bold;
+}
+
+/* Style for last name */
+.user-data-item:last-child {
+  margin-bottom: 0;
+}
