@@ -1,8 +1,22 @@
 export default { checkUser, addUserToSession }
 
-function checkUser(id) {
+function checkUser(input) {
     const url = new URL('http://127.0.0.1:5000/api/v1/resources/user');
-    const params = { Id: id };
+    let params;
+
+    // Check if the input is an integer (Id) or a string (FirstName LastName)
+    if (!isNaN(input) && Number.isInteger(parseFloat(input))) {
+        // Input is an ID
+        params = { Id: parseInt(input) }; // Ensure it's sent as an integer
+    } else if (input.includes(' ')) {
+        // Input contains a first and last name
+        const [firstName, lastName] = input.split(' ');
+        params = { FirstName: firstName, LastName: lastName };
+    } else {
+        console.error('Invalid input. Please provide a valid ID or FirstName LastName.');
+        return; // Exit the function if the input is invalid
+    }
+
     url.search = new URLSearchParams(params).toString();
 
     // Send the GET request

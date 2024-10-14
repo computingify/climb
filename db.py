@@ -97,8 +97,6 @@ class data_base:
             'id': user[0],
             'first_name': user[1],
             'last_name': user[2],
-            # 'brithday': user[3],
-            # 'email': user[4],
             }
         
         return ret
