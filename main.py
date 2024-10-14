@@ -173,7 +173,7 @@ def api_add_user_to_session():
     session_id = db.get_session(today)
 
     # Assign the user to a session
-    db.add_user_to_session(session_id, user_id, datetime.now().strftime("%H:%M"))
+    db.add_user_to_session(session_id, user_id, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
     # Return a success message
     return jsonify({'message': 'User added to session successfully.'}), 200

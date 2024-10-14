@@ -125,8 +125,12 @@ class data_base:
     def add_user_to_session(self, session_id, user_id, date):
         conn = sqlite3.connect(self.name)
         cur = conn.cursor()
-        
-        cur.execute(f"INSERT INTO {self.session_attendees_table} (session_id, user_id, date) VALUES (?, ?, ?)", (session_id, user_id, date))
-        conn.commit()
-        
-        conn.close()
+        print(f"Inserting into {self.session_attendees_table}: session_id={session_id}, user_id={user_id}, date={date}")
+
+        try:
+            cur.execute(f"INSERT INTO {self.session_attendees_table} (session_id, user_id, date) VALUES (?, ?, ?)", (session_id, user_id, date))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"An error occurred: {e}")
+        finally:
+            conn.close()
