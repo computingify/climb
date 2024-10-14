@@ -1,4 +1,4 @@
-export default {checkUser, addUserToSession}
+export default { checkUser, addUserToSession }
 
 function checkUser(id) {
     const url = new URL('http://127.0.0.1:5000/api/v1/resources/user');
@@ -7,25 +7,31 @@ function checkUser(id) {
 
     // Send the GET request
     fetch(url)
-    .then(response => {
-        if (!response.ok) {
-        throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Response data:', data);
-        // Handle the response data
-        displayUserData(data);
-        return data
-    })
-    .catch(error => {
-        console.error('There was a problem with the fetch operation:', error);
-        // Handle errors
-    });
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            // Handle the response data
+            displayUserData(data);
+            return data;
+        })
+        .catch(error => {
+            console.error('There was a problem with the fetch operation:', error);
+            // Handle errors
+        });
 }
 
 function displayUserData(userData) {
+    // Remove any existing user data container
+    const existingContainer = document.querySelector('.user-data-container');
+    if (existingContainer) {
+        existingContainer.remove();
+    }
+
     // Create a container div to hold the user data
     const container = document.createElement('div');
     container.classList.add('user-data-container');
@@ -42,9 +48,8 @@ function displayUserData(userData) {
     document.body.appendChild(container);
 
     // Valid button part
-    const buttonValid = document.createElement('button')
+    const buttonValid = document.createElement('button');
     buttonValid.textContent = "Valid";
-    // buttonValid.classList.add('button');
 
     buttonValid.addEventListener('click', function () {
         addUserToSession(userData.id, container);
@@ -52,7 +57,7 @@ function displayUserData(userData) {
     container.append(buttonValid);
 }
 
-function addUserToSession(id, container){
+function addUserToSession(id, container) {
     console.log("Push Valid button");
     const url = new URL('http://127.0.0.1:5000/api/v1/resources/session/add_user');
     const params = { UserId: id };
@@ -68,24 +73,29 @@ function addUserToSession(id, container){
 
     // Send the POST request
     fetch(url, options)
-    .then(response => {
-        if (response.ok) {
-            // If the response status is 200, set background to green
-            container.style.backgroundColor = 'green';
-        }else{
-            // If the response status is not 200, set background to red
+        .then(response => {
+            if (response.ok) {
+                // If the response status is 200, set background to green
+                container.style.backgroundColor = 'green';
+
+                // Remove the container after 3 seconds
+                setTimeout(() => {
+                    container.remove();
+                }, 3000);
+            } else {
+                // If the response status is not 200, set background to red
+                container.style.backgroundColor = 'red';
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            return data;
+        })
+        .catch(error => {
+            // Handle errors
             container.style.backgroundColor = 'red';
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Response data:', data);
-        return data
-    })
-    .catch(error => {
-        // Handle errors
-        container.style.backgroundColor = 'red';
-        console.error('There was a problem with the fetch operation:', error);
-    });
+            console.error('There was a problem with the fetch operation:', error);
+        });
 }
