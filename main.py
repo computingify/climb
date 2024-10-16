@@ -57,6 +57,20 @@ def api_get_user():
 
     return jsonify(user)
 
+@app.route('/api/v1/resources/summary', methods=['GET'])
+def api_get_summary():
+    try:
+        climbers_per_session = db.get_users_per_session()
+        print("Here 1")
+        print(f"climbers: {climbers_per_session}")
+        for session_date, climbers in climbers_per_session.items():
+            print(f"Session on {session_date}: {', '.join(climbers)}")
+            
+    except NameError as e:
+        return jsonify({'error': str(e)}), 400
+
+    return jsonify(climbers_per_session)
+
 @app.route('/api/v1/resources/user', methods=['POST'])
 def api_add_user():
     query_parameters = request.args
@@ -173,7 +187,7 @@ def api_add_user_to_session():
     session_id = db.get_session(today)
 
     # Assign the user to a session
-    db.add_user_to_session(session_id, user_id, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    db.add_user_to_session(session_id, user_id)
 
     # Return a success message
     return jsonify({'message': 'User added to session successfully.'}), 200

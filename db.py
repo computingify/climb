@@ -37,12 +37,13 @@ class data_base:
         # Create attendees table
         cur.execute(f'''DROP TABLE IF EXISTS {self.session_attendees_table}''')
         sql_command = f'''CREATE TABLE IF NOT EXISTS {self.session_attendees_table} (
-                        id INTEGER PRIMARY KEY,
-                        user_id INTEGER,
-                        session_id INTEGER,
-                        date TEXT,
-                        FOREIGN KEY (user_id) REFERENCES {self.users_table}(id),
-                        FOREIGN KEY (session_id) REFERENCES {self.session_table}(id)
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        session_id INTEGER NOT NULL,
+                        user_id INTEGER NOT NULL,
+                        date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE(session_id, user_id),
+                        FOREIGN KEY (session_id) REFERENCES {self.session_table}(id),
+                        FOREIGN KEY (user_id) REFERENCES {self.users_table}(id)
                     )'''
         cur.execute(sql_command)
 
@@ -122,15 +123,42 @@ class data_base:
         
         return session_id
     
-    def add_user_to_session(self, session_id, user_id, date):
+    def add_user_to_session(self, session_id, user_id):
         conn = sqlite3.connect(self.name)
         cur = conn.cursor()
-        print(f"Inserting into {self.session_attendees_table}: session_id={session_id}, user_id={user_id}, date={date}")
+        print(f"Inserting into {self.session_attendees_table}: session_id={session_id}, user_id={user_id}")
 
         try:
-            cur.execute(f"INSERT INTO {self.session_attendees_table} (session_id, user_id, date) VALUES (?, ?, ?)", (session_id, user_id, date))
+            cur.execute(f"INSERT INTO {self.session_attendees_table} (session_id, user_id) VALUES (?, ?)", (session_id, user_id))
             conn.commit()
         except sqlite3.Error as e:
             print(f"An error occurred: {e}")
         finally:
             conn.close()
+            
+    def get_users_per_session(self):
+        conn = sqlite3.connect(self.name)
+        cur = conn.cursor()
+
+        # Query to join the user and sessions based on the session_attendees table
+        query = """
+        SELECT s.date, u.FirstName, u.LastName
+        FROM session_attendees sa
+        JOIN sessions s ON sa.session_id = s.id
+        JOIN users u ON sa.user_id = u.id
+        ORDER BY s.date, u.LastName, u.FirstName
+        """
+
+        cur.execute(query)
+        results = cur.fetchall()
+        print(f"result: {results}")
+
+        # Organize the results into a dictionary: {session_date: [climber names]}
+        sessions_summary = {}
+        for session_date, first_name, last_name in results:
+            if session_date not in sessions_summary:
+                sessions_summary[session_date] = []
+            sessions_summary[session_date].append(f"{first_name} {last_name}")
+
+        conn.close()
+        return sessions_summary
