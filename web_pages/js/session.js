@@ -3,6 +3,7 @@ export default sessionPage;
 import createSection from '/js/createSection.js';
 import serverCom from '/js/serverCom.js';
 import createInput from '/js/createInput.js';
+import { SERVER_URL } from '/js/config.js';
 
 // Access the functions as properties of the serverCom object
 const checkUser = serverCom.checkUser;
@@ -28,6 +29,29 @@ function sessionPage() {
     button.textContent = "Recherche";
     button.classList.add('button');
 
+    // Create a div to display the climber count
+    const climberCountDiv = document.createElement('div');
+    climberCountDiv.id = 'climber-count';
+    climberCountDiv.textContent = "Climbers attending: Loading...";
+    body.appendChild(climberCountDiv);
+
+    // Function to fetch and update the climber count
+    function updateClimberCount() {
+        fetch(`${SERVER_URL}/session/user/count`)
+        .then(response => response.json())
+        .then(data => {
+            climberCountDiv.textContent = `Climbers attending: ${data.user_count}`;
+        })
+        .catch(error => {
+            console.error('Error fetching climber count:', error);
+            climberCountDiv.textContent = "Climbers attending: Error fetching data";
+        });
+    }
+    
+    document.addEventListener('climberCountUpdated', updateClimberCount); // Listen for the event
+    // Call the function to update the climber count when the page loads
+    updateClimberCount();
+
     function search() {
         const user_id = inputId.value;
         console.log('launch search request for ID = ', user_id);
@@ -51,46 +75,5 @@ function sessionPage() {
         if (event.keyCode === 13) {
             search();
         }
-    });
-}
-
-// Function to remove the user data container after 3 seconds or clear input field
-function removeUserDataContainer(container, inputId) {
-    setTimeout(() => {
-        if (container) {
-            container.remove(); // Remove the container after 3 seconds
-            inputId.value = ''; // Clear the input field
-        }
-    }, 3000);
-}
-
-// Call removeUserDataContainer after a successful addUserToSession call
-function addUserToSession(id, container) {
-    console.log("Push Valid button");
-    const url = new URL('http://127.0.0.1:5000/api/v1/resources/session/add_user');
-    const params = { UserId: id };
-    url.search = new URLSearchParams(params).toString();
-
-    const options = {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    };
-
-    fetch(url, options)
-    .then(response => {
-        if (response.ok) {
-            container.style.backgroundColor = 'green';
-            removeUserDataContainer(container, document.getElementById('Identifiant'));
-        } else {
-            container.style.backgroundColor = 'red';
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .catch(error => {
-        container.style.backgroundColor = 'red';
-        console.error('There was a problem with the fetch operation:', error);
     });
 }

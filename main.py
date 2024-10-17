@@ -2,12 +2,11 @@ import flask
 from flask import request, jsonify
 from db import data_base, UserNotFoundError
 from datetime import datetime
-import re
 from email_validator import validate_email, EmailNotValidError
 from collections import namedtuple
-from difflib import SequenceMatcher
+from user import search_user
+from tool import checkId, format_name, format_birth_date
 
-NAME_MAX_SIZE = 16
 
 # Micro REST API creation
 app = flask.Flask(__name__)
@@ -47,9 +46,9 @@ def api_get_user():
     try:
 
         if first_name_val is not None and last_name_val is not None:
-            id_val = search_user(first_name_val, last_name_val)
+            id_val = search_user(db, first_name_val, last_name_val)
         if id_val is not None:
-            _checkId(id_val)
+            checkId(id_val)
             user = db.is_user_id_exist(id_val)
             
     except NameError as e:
@@ -57,15 +56,20 @@ def api_get_user():
 
     return jsonify(user)
 
+@app.route('/api/v1/resources/session/user/count', methods=['GET'])
+def api_get_session_user_count():
+    try:
+        today = datetime.now().date().isoformat()
+        count = db.get_session_user_count(today)
+    except NameError as e:
+        return jsonify({'error': str(e)}), 400
+    
+    return jsonify({'user_count': count})
+
 @app.route('/api/v1/resources/summary', methods=['GET'])
 def api_get_summary():
     try:
         climbers_per_session = db.get_users_per_session()
-        print("Here 1")
-        print(f"climbers: {climbers_per_session}")
-        for session_date, climbers in climbers_per_session.items():
-            print(f"Session on {session_date}: {', '.join(climbers)}")
-            
     except NameError as e:
         return jsonify({'error': str(e)}), 400
 
@@ -87,8 +91,8 @@ def api_add_user():
         return jsonify({'error': 'FirstName and LastName are required parameters.'}), 400
 
     try:
-        first_name_val = _format_name(first_name_val)
-        last_name_val = _format_name(last_name_val)
+        first_name_val = format_name(first_name_val)
+        last_name_val = format_name(last_name_val)
     except NameError as e:
         print(f'error {str(e)}')
         return jsonify({'error': str(e)}), 400
@@ -96,7 +100,7 @@ def api_add_user():
     # Validate the birth date format (if provided)
     if birth_date_str:
         try:
-            birth_date_val = _format_birth_date(birth_date_str)
+            birth_date_val = format_birth_date(birth_date_str)
         except NameError as e:
             print(f'error {str(e)}')
             return jsonify({'error': str(e)}), 400
@@ -114,51 +118,6 @@ def api_add_user():
     user_data = user_data_format(first_name=first_name_val, last_name=last_name_val, birth_date=birth_date_val, email=email_val)
     db.create_user(user_data)
     return jsonify("success")
-
-def search_user(first_name, last_name):
-    # Get partial first name and last name from the query parameters
-    first_name_val = first_name.strip().lower()
-    last_name_val = last_name.strip().lower()
-
-    if not first_name_val and not last_name_val:
-        return jsonify({'error': 'At least one of FirstName or LastName must be provided.'}), 400
-
-    # Get all users from the database
-    all_users = db.get_all_users()
-
-    # Function to find best match given the first and last names
-    def find_best_match(first_name, last_name):
-        best_match = None
-        best_score = 0
-
-        for user in all_users:
-            first_name_score = _similar(first_name, user[1].lower()) if first_name else 0
-            last_name_score = _similar(last_name, user[2].lower()) if last_name else 0
-            score = first_name_score + last_name_score
-
-            if score > best_score:
-                best_score = score
-                best_match = user
-
-        return best_match
-
-    # First attempt with original order
-    best_match = find_best_match(first_name_val, last_name_val)
-
-    if best_match:
-        return str(best_match[0])
-
-    # If no match found, try with reversed order
-    best_match = find_best_match(last_name_val, first_name_val)
-
-    if best_match:
-        return str(best_match[0])
-    else:
-        raise NameError(f'FirstName: {first_name} and LastName: {last_name} Unknown in DB.')
-
-def _similar(a, b):
-    """Return the similarity ratio between two strings."""
-    return SequenceMatcher(None, a, b).ratio()
 
 @app.route('/api/v1/resources/session/add_user', methods=['POST'])
 def api_add_user_to_session():
@@ -189,33 +148,13 @@ def api_add_user_to_session():
     # Assign the user to a session
     db.add_user_to_session(session_id, user_id)
 
+    # Get number of User
+    count_response = api_get_session_user_count()
+    count_data = count_response.get_json()  # Extract JSON data from the response
+    user_count = count_data.get('user_count', 0)
     # Return a success message
-    return jsonify({'message': 'User added to session successfully.'}), 200
+    return jsonify({'message': 'User added to session successfully.', 'count': user_count}), 200
 
 def page_not_found(e):
     """ Fonction utilisée si la mauvaise route est spécifiée par un(e) utilisateur(-trice)"""
     return "<h1>404</h1><p>La ressource n'a pas été trouvée.</p>", 404
-
-def _format_name(name_raw):
-    name = name_raw.capitalize()
-    # Check if the name contain only allowed characters
-    if not re.match(r'^[a-zA-Z-]+$', name):
-        raise NameError('FirstName and LastName must contain only letters and hyphens.')
-
-    # Check if the FirstName and LastName exceed the maximum length
-    if len(name) > NAME_MAX_SIZE:
-        raise NameError(f'FirstName and LastName must be {NAME_MAX_SIZE} characters or less.')
-    
-    return name
-
-def _checkId(id):
-    if not re.match(r'^[1-9]+$', id):
-        raise NameError(f'id is not in correct format')
-
-def _format_birth_date(birth_date):
-    # Validate the birth date format
-    if not re.match(r'^\d{4}-\d{2}-\d{2}$', birth_date):
-        raise NameError('Invalid birth date format. Expected yyyy-mm-dd.')
-
-    # Convert the birth date string to a datetime object
-    return datetime.strptime(birth_date, "%Y-%m-%d")

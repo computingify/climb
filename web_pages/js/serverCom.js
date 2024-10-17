@@ -1,7 +1,9 @@
 export default { checkUser, addUserToSession }
 
+import { SERVER_URL } from '/js/config.js';
+
 function checkUser(input) {
-    const url = new URL('http://127.0.0.1:5000/api/v1/resources/user');
+    const url = new URL(`${SERVER_URL}/user`);
     let params;
 
     // Check if the input is an integer (Id) or a string (FirstName LastName)
@@ -73,7 +75,7 @@ function displayUserData(userData) {
 
 function addUserToSession(id, container) {
     console.log("Push Valid button");
-    const url = new URL('http://127.0.0.1:5000/api/v1/resources/session/add_user');
+    const url = new URL(`${SERVER_URL}/session/add_user`);
     const params = { UserId: id };
     url.search = new URLSearchParams(params).toString();
 
@@ -91,6 +93,17 @@ function addUserToSession(id, container) {
             if (response.ok) {
                 // If the response status is 200, set background to green
                 container.style.backgroundColor = 'green';
+
+                // Create and append the success message
+                const successMessage = document.createElement('p');
+                successMessage.textContent = "Bonne grimpe";
+                successMessage.style.fontWeight = 'bold'; // Make the text bold
+                successMessage.style.color = 'white'; // Optional: Change the text color
+                container.appendChild(successMessage);
+
+                // Update climber count after adding a user
+                const event = new CustomEvent('climberCountUpdated');
+                document.dispatchEvent(event); // Dispatch the event here
 
                 // Remove the container after 3 seconds
                 setTimeout(() => {

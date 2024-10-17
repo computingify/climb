@@ -35,7 +35,6 @@ class data_base:
         cur.execute(sql_command)
 
         # Create attendees table
-        cur.execute(f'''DROP TABLE IF EXISTS {self.session_attendees_table}''')
         sql_command = f'''CREATE TABLE IF NOT EXISTS {self.session_attendees_table} (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         session_id INTEGER NOT NULL,
@@ -151,7 +150,6 @@ class data_base:
 
         cur.execute(query)
         results = cur.fetchall()
-        print(f"result: {results}")
 
         # Organize the results into a dictionary: {session_date: [climber names]}
         sessions_summary = {}
@@ -162,3 +160,19 @@ class data_base:
 
         conn.close()
         return sessions_summary
+    
+    def get_session_user_count(self, session_date):
+        conn = sqlite3.connect(self.name)
+        cur = conn.cursor()
+
+        query = """
+        SELECT COUNT(*)
+        FROM session_attendees sa
+        JOIN sessions s ON sa.session_id = s.id
+        WHERE s.date = ?
+        """
+        cur.execute(query, (session_date,))
+        count = cur.fetchone()[0]
+
+        conn.close()
+        return count

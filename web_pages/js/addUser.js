@@ -1,3 +1,5 @@
+import { SERVER_URL } from '/js/config.js';
+
 export default addUserForm
 
 function addUserForm() {
@@ -97,7 +99,7 @@ function addUserForm() {
       }
       
       // Send the POST request
-      fetch('http://127.0.0.1:5000/api/v1/resources/user', options)
+      fetch(`${SERVER_URL}/resources/user`, options)
         .then(response => {
           if (!response.ok) {
             throw new Error('Network response was not ok');
