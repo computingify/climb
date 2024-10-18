@@ -6,14 +6,16 @@ from email_validator import validate_email, EmailNotValidError
 from collections import namedtuple
 from user import search_user
 from tool import checkId, format_name, format_birth_date
-
+from csv_importer import CsvImporter
 
 # Micro REST API creation
 app = flask.Flask(__name__)
-app.config["DEBUG"] = True
-
 # Create Data Base object
 db = data_base()
+# Launch the application
+if __name__ == '__main__':
+    # app.config["DEBUG"] = False
+    app.run(host='0.0.0.0', port=5000)
 
 # definition de l'ensemble des routes prises en charge par l'API
 @app.route('/', methods=['GET'])
@@ -151,9 +153,24 @@ def api_add_user_to_session():
     # Get number of User
     count_response = api_get_session_user_count()
     count_data = count_response.get_json()  # Extract JSON data from the response
+    print(count_data)
     user_count = count_data.get('user_count', 0)
     # Return a success message
     return jsonify({'message': 'User added to session successfully.', 'count': user_count}), 200
+
+@app.route('/api/v1/resources/user/import', methods=['POST'])
+def api_import_users():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    if file and file.filename.endswith('.csv'):
+        importer = CsvImporter(db)
+        importer.import_users(file)
+        return jsonify({'message': 'Users imported successfully!'}), 200
+    else:
+        return jsonify({'error': 'Invalid file format. Please upload a CSV file.'}), 400
 
 def page_not_found(e):
     """ Fonction utilisée si la mauvaise route est spécifiée par un(e) utilisateur(-trice)"""

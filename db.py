@@ -86,7 +86,7 @@ class data_base:
         conn = sqlite3.connect(self.name)
         cur = conn.cursor()
 
-        cur.execute(f"SELECT * FROM {self.users_table} WHERE id=?", id)
+        cur.execute(f"SELECT * FROM {self.users_table} WHERE id=?", (id,))
         user = cur.fetchone()
         
         if user is None:
