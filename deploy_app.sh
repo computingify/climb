@@ -2,9 +2,11 @@
 
 # Define variables
 APP_DIR="/home/pi/climbBackEnd"
+APP_PORT="5000"
 REPO_URL="https://github.com/computingify/climbBackEnd.git"  # Replace with your Git repository URL
 FLASK_APP="main.py"
 FLASK_ENV="production"
+ETH_IP=$(ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
 
 # Step 1: Update system and install dependencies
 echo "Updating system and installing dependencies..."
@@ -32,13 +34,15 @@ pip install -r requirements.txt
 echo "Setting up the Flask application..."
 export FLASK_APP=$FLASK_APP
 export FLASK_ENV=$FLASK_ENV
+export APP_PORT=$APP_PORT
+export ETH_IP=$ETH_IP
 
 # Step 6: Configure Nginx
 echo "Configuring Nginx..."
 sudo tee /etc/nginx/sites-available/climb_app <<EOF
 server {
     listen 80;
-    server_name 192.168.0.78;
+    server_name $ETH_IP;
 
     location / {
         proxy_pass http://127.0.0.1:5000;
@@ -71,7 +75,7 @@ User=pi
 Group=www-data
 WorkingDirectory=$APP_DIR
 Environment="PATH=$APP_DIR/venv/bin"
-ExecStart=$APP_DIR/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:5000 main:app
+ExecStart=$APP_DIR/venv/bin/flask --app $FLASK_APP run --host=0.0.0.0 --port=$APP_PORT
 
 [Install]
 WantedBy=multi-user.target
@@ -82,4 +86,6 @@ echo "Starting and enabling the Flask app service..."
 sudo systemctl start climb_app
 sudo systemctl enable climb_app
 
-echo "Deployment completed! Your app should now be accessible at http://192.168.0.78:5000"
+
+# Get the IP address of the Ethernet interface (eth0)
+echo "Deployment completed! Your app should now be accessible at http://$ETH_IP:$APP_PORT"
