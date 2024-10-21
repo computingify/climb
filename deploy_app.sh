@@ -7,11 +7,14 @@ REPO_URL="https://github.com/computingify/climbBackEnd.git"  # Replace with your
 FLASK_APP="main.py"
 FLASK_ENV="production"
 ETH_IP=$(ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
+JQUERY_VERSION="3.7.1"
+JQUERY_FILE="jquery-$JQUERY_VERSION.slim.js"
+STATIC_DIR="$APP_DIR/web_pages/js/thirdParty"
 
 # Step 1: Update system and install dependencies
 echo "Updating system and installing dependencies..."
 sudo apt update && sudo apt upgrade -y
-sudo apt install -y python3 python3-venv python3-pip nginx git
+sudo apt install -y python3 python3-venv python3-pip nginx git curl
 
 # Step 2: Clone the repository if it doesn't exist
 if [ ! -d "$APP_DIR" ]; then
@@ -30,14 +33,21 @@ echo "Installing Python dependencies..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# Step 5: Set up the Flask application
+# Step 5: Download jQuery if it doesn't exist
+echo "Downloading jQuery..."
+mkdir -p "$STATIC_DIR"
+if [ ! -f "$STATIC_DIR/$JQUERY_FILE" ]; then
+    curl -o "$STATIC_DIR/$JQUERY_FILE" "https://code.jquery.com/$JQUERY_FILE"
+fi
+
+# Step 6: Set up the Flask application
 echo "Setting up the Flask application..."
 export FLASK_APP=$FLASK_APP
 export FLASK_ENV=$FLASK_ENV
 export APP_PORT=$APP_PORT
 export ETH_IP=$ETH_IP
 
-# Step 6: Configure Nginx
+# Step 7: Configure Nginx
 echo "Configuring Nginx..."
 sudo tee /etc/nginx/sites-available/climb_app <<EOF
 server {
@@ -63,7 +73,7 @@ sudo ln -s /etc/nginx/sites-available/climb_app /etc/nginx/sites-enabled
 sudo nginx -t
 sudo systemctl restart nginx
 
-# Step 7: Create a systemd service file for the Flask app
+# Step 8: Create a systemd service file for the Flask app
 echo "Creating a systemd service for the Flask app..."
 sudo tee /etc/systemd/system/climb_app.service <<EOF
 [Unit]
@@ -81,11 +91,10 @@ ExecStart=$APP_DIR/venv/bin/flask --app $FLASK_APP run --host=0.0.0.0 --port=$AP
 WantedBy=multi-user.target
 EOF
 
-# Step 8: Start and enable the systemd service
+# Step 9: Start and enable the systemd service
 echo "Starting and enabling the Flask app service..."
 sudo systemctl start climb_app
 sudo systemctl enable climb_app
-
 
 # Get the IP address of the Ethernet interface (eth0)
 echo "Deployment completed! Your app should now be accessible at http://$ETH_IP:$APP_PORT"
