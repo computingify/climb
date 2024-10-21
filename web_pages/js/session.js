@@ -16,7 +16,7 @@ function sessionPage() {
     body.innerHTML = '';
 
     const id = createSection("identifiant");
-    id.value = "Identifiant";
+    id.value = "Identifiant ou Nom Prenom";
 
     const inputId = createInput(id, 'Identifiant');
     // Set focus on the inputId element
