@@ -1,43 +1,68 @@
-export default sessionPage;
-
 import createSection from '/js/createSection.js';
 import serverCom from '/js/serverCom.js';
 import createInput from '/js/createInput.js';
 import { SERVER_URL } from '/js/config.js';
 
+export default sessionPage;
+
 // Access the functions as properties of the serverCom object
-const checkUser = serverCom.checkUser;
+const { checkUser } = serverCom;
 
 function sessionPage() {
-    // Get a reference to the <body> element
-    var body = document.body;
+    const body = document.body;
+    body.innerHTML = ''; // Clear the content of the <body> element
 
-    // Clear the content of the <body> element
-    body.innerHTML = '';
+    const idSection = createSection("identifiant");
+    idSection.value = "Identifiant ou Nom Prenom";
 
-    const id = createSection("identifiant");
-    id.value = "Identifiant ou Nom Prenom";
+    const inputId = createInput(idSection, 'Identifiant');
+    inputId.focus(); // Focus on the input field
 
-    const inputId = createInput(id, 'Identifiant');
-    // Set focus on the inputId element
-    inputId.focus();
+    const button = createSearchButton(inputId);
+    const climberCountDiv = createClimberCountDiv();
+    
+    // Append elements to the body
+    body.appendChild(climberCountDiv);
+    idSection.appendChild(button);
+    body.appendChild(idSection);
 
+    // Initialize the climber count
+    updateClimberCount(climberCountDiv);
+
+    // Update the climber count when the custom event is dispatched
+    document.addEventListener('climberCountUpdated', () => updateClimberCount(climberCountDiv));
+
+    // Trigger search on 'Enter' key press
+    inputId.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            search(inputId);
+        }
+    });
+}
+
+function createSearchButton(inputElement) {
     const buttonDiv = document.createElement('div');
-    buttonDiv.style.display = 'flex'; // Set display property to flex
+    buttonDiv.style.display = 'flex';
 
     const button = document.createElement('button');
     button.textContent = "Recherche";
     button.classList.add('button');
 
-    // Create a div to display the climber count
+    button.addEventListener('click', () => search(inputElement));
+
+    buttonDiv.appendChild(button);
+    return buttonDiv;
+}
+
+function createClimberCountDiv() {
     const climberCountDiv = document.createElement('div');
     climberCountDiv.id = 'climber-count';
     climberCountDiv.textContent = "Climbers attending: Loading...";
-    body.appendChild(climberCountDiv);
+    return climberCountDiv;
+}
 
-    // Function to fetch and update the climber count
-    function updateClimberCount() {
-        fetch(`${SERVER_URL}/session/user/count`)
+function updateClimberCount(climberCountDiv) {
+    fetch(`${SERVER_URL}/session/user/count`)
         .then(response => response.json())
         .then(data => {
             climberCountDiv.textContent = `Climbers attending: ${data.user_count}`;
@@ -46,34 +71,29 @@ function sessionPage() {
             console.error('Error fetching climber count:', error);
             climberCountDiv.textContent = "Climbers attending: Error fetching data";
         });
-    }
-    
-    document.addEventListener('climberCountUpdated', updateClimberCount); // Listen for the event
-    // Call the function to update the climber count when the page loads
-    updateClimberCount();
+}
 
-    function search() {
-        const user_id = inputId.value;
-        console.log('launch search request for ID = ', user_id);
-
-        // Remove any existing user data container
-        const existingContainer = document.querySelector('.user-data-container');
-        if (existingContainer) {
-            existingContainer.remove();
-        }
-        inputId.value = ''; // Clear the input when a new search is initiated
-
-        checkUser(user_id);
+function search(inputElement) {
+    const userId = inputElement.value.trim();
+    if (!userId) {
+        console.warn('Search aborted: Empty input');
+        return;
     }
 
-    button.addEventListener('click', search);
-    buttonDiv.append(button);
-    id.append(buttonDiv);
+    console.log('Launching search request for ID:', userId);
 
-    // Listen for 'keypress' event on the input field
-    inputId.addEventListener('keypress', function (event) {
-        if (event.keyCode === 13) {
-            search();
-        }
-    });
+    // Remove any existing user data container
+    removeExistingUserData();
+
+    inputElement.value = ''; // Clear the input field
+
+    // Perform the user check
+    checkUser(userId);
+}
+
+function removeExistingUserData() {
+    const existingContainer = document.querySelector('.user-data-container');
+    if (existingContainer) {
+        existingContainer.remove();
+    }
 }
