@@ -2,6 +2,7 @@ import flask
 from flask import request, jsonify
 from db import data_base, UserNotFoundError
 from datetime import datetime
+import pytz
 from email_validator import validate_email, EmailNotValidError
 from collections import namedtuple
 from user import search_user
@@ -15,6 +16,9 @@ app = flask.Flask(__name__)
 db = data_base()
 # SQL injection checker
 checker = SQLInjectionChecker()
+
+# Timezone setup for Europe/Paris
+paris_tz = pytz.timezone('Europe/Paris')
 
 # Launch the application
 if __name__ == '__main__':
@@ -64,7 +68,7 @@ def api_get_user():
 @app.route('/api/v1/resources/session/user/count', methods=['GET'])
 def api_get_session_user_count():
     try:
-        today = datetime.now().date().isoformat()
+        today = datetime.now(pytz.utc).astimezone(paris_tz).date()
         count = db.get_session_user_count(today)
     except NameError as e:
         return jsonify({'error': str(e)}), 400
@@ -147,11 +151,11 @@ def api_add_user_to_session():
         return jsonify({'error': str(e)}), 404
 
     # Get session ID for the current day
-    today = datetime.now().date()
+    today = datetime.now(pytz.utc).astimezone(paris_tz).date()
     session_id = db.get_session(today)
 
     # Assign the user to a session
-    db.add_user_to_session(session_id, user_id)
+    db.add_user_to_session(session_id, user_id, datetime.now(pytz.utc).astimezone(paris_tz).strftime('%Y-%m-%d %H:%M'))
 
     # Get number of User
     count_response = api_get_session_user_count()

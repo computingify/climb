@@ -39,7 +39,7 @@ class data_base:
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         session_id INTEGER NOT NULL,
                         user_id INTEGER NOT NULL,
-                        date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        date DATETIME NOT NULL,
                         UNIQUE(session_id, user_id),
                         FOREIGN KEY (session_id) REFERENCES {self.session_table}(id),
                         FOREIGN KEY (user_id) REFERENCES {self.users_table}(id)
@@ -122,13 +122,13 @@ class data_base:
         
         return session_id
     
-    def add_user_to_session(self, session_id, user_id):
+    def add_user_to_session(self, session_id, user_id, date_time):
         conn = sqlite3.connect(self.name)
         cur = conn.cursor()
-        print(f"Inserting into {self.session_attendees_table}: session_id={session_id}, user_id={user_id}")
+        print(f"Inserting into {self.session_attendees_table}: session_id={session_id}, user_id={user_id}, date={date_time}")
 
         try:
-            cur.execute(f"INSERT INTO {self.session_attendees_table} (session_id, user_id) VALUES (?, ?)", (session_id, user_id))
+            cur.execute(f"INSERT INTO {self.session_attendees_table} (session_id, user_id, date) VALUES (?, ?, ?)", (session_id, user_id, date_time))
             conn.commit()
         except sqlite3.Error as e:
             print(f"An error occurred: {e}")
@@ -164,6 +164,7 @@ class data_base:
     def get_session_user_count(self, session_date):
         conn = sqlite3.connect(self.name)
         cur = conn.cursor()
+        print(f'session data: {session_date}')
 
         query = """
         SELECT COUNT(*)
