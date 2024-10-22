@@ -20,7 +20,9 @@ def search_user(db, first_name, last_name):
         for user in all_users:
             first_name_score = similar(first_name, user[1].lower()) if first_name else 0
             last_name_score = similar(last_name, user[2].lower()) if last_name else 0
-            score = first_name_score + last_name_score
+            twisted_first_name_score = similar(last_name, user[1].lower()) if last_name else 0
+            twisted_last_name_score = similar(first_name, user[2].lower()) if first_name else 0
+            score = first_name_score + last_name_score + twisted_first_name_score + twisted_last_name_score
 
             if score > best_score:
                 best_score = score
@@ -28,16 +30,11 @@ def search_user(db, first_name, last_name):
 
         return best_match
 
-    # First attempt with original order
     best_match = find_best_match(first_name_val, last_name_val)
 
-    if best_match:
-        return str(best_match[0])
+    # Handle the case where no match is found
+    if not best_match:
+        return jsonify({'error': f'No user found with FirstName: {first_name} and LastName: {last_name}'}), 404
 
-    # If no match found, try with reversed order
-    best_match = find_best_match(last_name_val, first_name_val)
-
-    if best_match:
-        return str(best_match[0])
-    else:
-        raise NameError(f'FirstName: {first_name} and LastName: {last_name} Unknown in DB.')
+    # Return the found user's ID if a match is found
+    return str(best_match[0])

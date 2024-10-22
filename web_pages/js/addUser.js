@@ -99,7 +99,7 @@ function addUserForm() {
       }
       
       // Send the POST request
-      fetch(`${SERVER_URL}/resources/user`, options)
+      fetch(`${SERVER_URL}/user`, options)
         .then(response => {
           if (!response.ok) {
             throw new Error('Network response was not ok');

@@ -7,11 +7,15 @@ from collections import namedtuple
 from user import search_user
 from tool import checkId, format_name, format_birth_date
 from csv_importer import CsvImporter
+from sqlInjectionChecker import SQLInjectionChecker
 
 # Micro REST API creation
 app = flask.Flask(__name__)
 # Create Data Base object
 db = data_base()
+# SQL injection checker
+checker = SQLInjectionChecker()
+
 # Launch the application
 if __name__ == '__main__':
     # app.config["DEBUG"] = False
@@ -46,7 +50,6 @@ def api_get_user():
         return jsonify({'error': 'FirstName and LastName are required parameters. Or use Id'}), 400
 
     try:
-
         if first_name_val is not None and last_name_val is not None:
             id_val = search_user(db, first_name_val, last_name_val)
         if id_val is not None:
@@ -79,7 +82,6 @@ def api_get_summary():
 
 @app.route('/api/v1/resources/user', methods=['POST'])
 def api_add_user():
-    query_parameters = request.args
 
     # Validate FirstName and LastName format
     first_name_val = request.form.get('FirstName')
@@ -127,10 +129,11 @@ def api_add_user_to_session():
     # Get the user data from the request
     query_parameters = request.args
     user_id = query_parameters.get('UserId')
+    safe = checker.is_safe(user_id)
     
     # Check if the user_id is provided
-    if user_id is None:
-        return jsonify({'error': 'UserId parameter is required.'}), 400
+    if user_id is None or not safe:
+        return jsonify({'error': 'UserId parameter is empty or not correct.'}), 400
     
     try:
         int(user_id)
