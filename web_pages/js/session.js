@@ -16,8 +16,6 @@ function sessionPage() {
     idSection.value = "Identifiant ou Nom Prenom";
 
     const inputId = createInput(idSection, 'Identifiant');
-    inputId.focus(); // Focus on the input field
-
     const button = createSearchButton(inputId);
     const climberCountDiv = createClimberCountDiv();
     
@@ -26,6 +24,9 @@ function sessionPage() {
     idSection.appendChild(button);
     body.appendChild(idSection);
 
+    // Focus on the input field
+    inputId.focus();
+    
     // Initialize the climber count
     updateClimberCount(climberCountDiv);
 
