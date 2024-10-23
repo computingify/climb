@@ -66,10 +66,10 @@ function displayUserData(userData) {
     // Valid button part
     const buttonValid = document.createElement('button');
     buttonValid.textContent = "Valid";
+    buttonValid.classList.add('button');
 
-    buttonValid.addEventListener('click', function () {
-        addUserToSession(userData.id, container);
-    });
+    buttonValid.addEventListener('click', () => addUserToSession(userData.id, container));
+
     container.append(buttonValid);
 }
 
