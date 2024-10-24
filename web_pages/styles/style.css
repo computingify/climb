@@ -88,5 +88,57 @@ input[type="text"], input[type="email"], input[type="submit"] {
 
   .button, .buttonSession {
     width: 100%;
+    font-size: 1rem;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Styling for smaller mobile devices */
+@media (max-width: 480px) {
+  section {
+    padding: 1rem;
+    margin: 0.5rem auto;
+  }
+
+  .button, .buttonSession {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .user-data-container {
+    padding: 10px;
+  }
+}
+
+/* Logo Banner Styling */
+.logo-banner {
+  width: 100%;
+  background-color: #f8f8f8;
+  text-align: center;
+  padding: 10px 0;
+  position: relative;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  box-sizing: border-box;
+}
+
+.banner-logo {
+  max-width: 100%;
+  height: auto;
+  max-height: 50px;
+}
+
+/* Additional Styles for Small Devices */
+@media (max-width: 768px) {
+  .logo-banner {
+    padding: 8px 0;
+  }
+
+  .banner-logo {
+    max-height: 40px;
   }
 }
