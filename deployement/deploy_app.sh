@@ -85,7 +85,7 @@ User=pi
 Group=www-data
 WorkingDirectory=$APP_DIR
 Environment="PATH=$APP_DIR/venv/bin"
-ExecStart=$APP_DIR/venv/bin/flask --app $FLASK_APP run --host=0.0.0.0 --port=$APP_PORT
+ExecStart=$APP_DIR/venv/bin/gunicorn -w 4 -b 0.0.0.0:$APP_PORT main:app
 
 [Install]
 WantedBy=multi-user.target
