@@ -2,6 +2,7 @@ import createSection from '/js/createSection.js';
 import serverCom from '/js/serverCom.js';
 import createInput from '/js/createInput.js';
 import { SERVER_URL } from '/js/config.js';
+import { addLogoToPage } from '/js/tools.js';
 
 export default sessionPage;
 
@@ -10,12 +11,14 @@ const { checkUser } = serverCom;
 
 function sessionPage() {
     const body = document.body;
+    const logo = document.querySelector('.logo-banner');
     body.innerHTML = ''; // Clear the content of the <body> element
+    body.appendChild(logo); // Keep the logo
 
     const idSection = createSection("identifiant");
-    idSection.value = "Identifiant ou Nom Prenom";
+    idSection.value = "Identifiant";
 
-    const inputId = createInput(idSection, 'Identifiant');
+    const inputId = createInput(idSection, 'Identifiant ou Nom Prenom');
     const button = createSearchButton(inputId);
     const climberCountDiv = createClimberCountDiv();
     

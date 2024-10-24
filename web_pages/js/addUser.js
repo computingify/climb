@@ -4,7 +4,10 @@ export default addUserForm;
 
 function addUserForm() {
   const body = document.body;
-  body.innerHTML = ''; // Clear existing content
+  
+  const logo = document.querySelector('.logo-banner');
+  body.innerHTML = ''; // Clear the content of the <body> element
+  body.appendChild(logo); // Keep the logo
 
   console.log("Run addUserForm");
   const form = document.createElement('form');

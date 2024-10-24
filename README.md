@@ -8,20 +8,19 @@ wget https://raw.githubusercontent.com/computingify/climbBackEnd/develop/deploy_
 
 enable executable
 <code>
-chmod +x /home/pi/deploy_app.sh
+chmod +x /home/pi/deployement/deploy_app.sh
 </code>
 
 install
 <code>
-/home/pi/deploy_app.sh
+/home/pi/deployement/deploy_app.sh
 </code>
 
 ## Update
-go to installation directory
-and launch update_app.sh:
+From an host machine
 <code>
-chmod +x /home/pi/deploy_app.sh
-/home/pi/update_app.sh
+chmod +x /home/pi/deployement/deploy_RPi.sh
+./home/pi/deployement/deploy_RPi.sh
 </code>
 
 ## Advance
@@ -38,3 +37,7 @@ pip install -r requirements.txt
 <code>
 flask --app main.py --debug run
 </code>
+
+### Manually modify database
+Use sqllitebrowser tool: https://sqlitebrowser.org
+if the database is on ssh remote FS, follow this tuto: https://www.petergirnus.com/blog/how-to-use-sshfs-on-macosyes

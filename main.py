@@ -26,6 +26,10 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
 
 # definition de l'ensemble des routes prises en charge par l'API
+# @app.before_request
+# def log_request_info():
+#     print(f"Request for: {flask.request.path}")
+    
 @app.route('/', methods=['GET'])
 def home():
     return flask.render_template('index.html')
@@ -37,6 +41,14 @@ def send_js(path):
 @app.route('/styles/<path:path>')
 def send_styles(path):
     return flask.send_from_directory('web_pages/styles', path)
+
+@app.route('/favicon.ico')
+def favicon():
+    return flask.send_from_directory('web_pages/js/resources', 'favicon.ico')
+
+@app.route('/resources/<path:filename>')
+def serve_resources(filename):
+    return flask.send_from_directory('web_pages/js/resources', filename)
 
 @app.route('/api/v1/resources/users/all', methods=['GET'])
 def api_get_all_users():
