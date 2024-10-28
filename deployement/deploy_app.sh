@@ -14,7 +14,7 @@ STATIC_DIR="$APP_DIR/web_pages/js/thirdParty"
 # Step 1: Update system and install dependencies
 echo "Updating system and installing dependencies..."
 sudo apt update && sudo apt upgrade -y
-sudo apt install -y python3 python3-venv python3-pip nginx git curl
+sudo apt install -y python3 python3-venv python3-pip nginx git curl certbot python3-certbot-nginx
 
 # Step 2: Clone the repository if it doesn't exist
 if [ ! -d "$APP_DIR" ]; then
@@ -31,7 +31,7 @@ source venv/bin/activate
 # Step 4: Install Python dependencies
 echo "Installing Python dependencies..."
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install -r deployement/requirements.txt
 
 # Step 5: Download jQuery if it doesn't exist
 echo "Downloading jQuery..."
@@ -47,7 +47,11 @@ export FLASK_ENV=$FLASK_ENV
 export APP_PORT=$APP_PORT
 export ETH_IP=$ETH_IP
 
-# Step 7: Configure Nginx
+# Step 7: Obtain SSL Certificate with Certbot
+echo "Obtaining SSL Certificate with Certbot..."
+sudo certbot --nginx -d http://maisonadrisoph.freeboxos.fr --non-interactive --agree-tos -m adrien.jouve@adn-dev.fr
+
+# Step 8: Configure Nginx
 echo "Configuring Nginx..."
 sudo tee /etc/nginx/sites-available/climb_app <<EOF
 server {
@@ -82,7 +86,7 @@ sudo ln -s /etc/nginx/sites-available/climb_app /etc/nginx/sites-enabled
 sudo nginx -t
 sudo systemctl restart nginx
 
-# Step 8: Create a systemd service file for the Flask app
+# Step 9: Create a systemd service file for the Flask app
 echo "Creating a systemd service for the Flask app..."
 sudo tee /etc/systemd/system/climb_app.service <<EOF
 [Unit]
@@ -100,10 +104,37 @@ ExecStart=$APP_DIR/venv/bin/gunicorn -w 4 -b 127.0.0.1:8000 main:app
 WantedBy=multi-user.target
 EOF
 
-# Step 9: Start and enable the systemd service
+# Step 10: Start and enable the systemd service
 echo "Starting and enabling the Flask app service..."
 sudo systemctl start climb_app
 sudo systemctl enable climb_app
 
-# Get the IP address of the Ethernet interface (eth0)
-echo "Deployment completed! Your app should now be accessible at http://$ETH_IP:$APP_PORT"
+# Step 11: Set up automatic certificate renewal with systemd timer
+echo "Setting up Certbot renewal with systemd timer..."
+sudo tee /etc/systemd/system/certbot-renew.service <<EOF
+[Unit]
+Description=Certbot Renewal Service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/certbot renew --quiet --deploy-hook "systemctl reload nginx"
+EOF
+
+sudo tee /etc/systemd/system/certbot-renew.timer <<EOF
+[Unit]
+Description=Run Certbot renewal twice daily
+
+[Timer]
+OnCalendar=*-*-* 00/12:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
+# Start and enable the Certbot renewal timer
+sudo systemctl start certbot-renew.timer
+sudo systemctl enable certbot-renew.timer
+
+# Display final message with app URL
+echo "Deployment completed! Your app should now be accessible at https://$ETH_IP"
