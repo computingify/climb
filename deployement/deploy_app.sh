@@ -6,7 +6,7 @@ APP_PORT="5000"
 REPO_URL="https://github.com/computingify/climbBackEnd.git"  # Replace with your Git repository URL
 FLASK_APP="main.py"
 FLASK_ENV="production"
-ETH_IP=$(ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
+ETH_IP=$(ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1) # The IP address of the device where we are
 JQUERY_VERSION="3.7.1"
 JQUERY_FILE="jquery-$JQUERY_VERSION.slim.js"
 STATIC_DIR="$APP_DIR/web_pages/js/thirdParty"
@@ -51,11 +51,14 @@ export ETH_IP=$ETH_IP
 echo "Configuring Nginx..."
 sudo tee /etc/nginx/sites-available/climb_app <<EOF
 server {
-    listen 80;
+    listen 443 ssl;
     server_name $ETH_IP;
 
+    ssl_certificate /etc/letsencrypt/live/$ETH_IP/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/$ETH_IP/privkey.pem;
+
     location / {
-        proxy_pass http://127.0.0.1:5000;
+        proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -64,6 +67,12 @@ server {
 
     location /static {
         alias $APP_DIR/static;
+    }
+
+    server {
+        listen 80;
+        server_name $ETH_IP;
+        return 301 https://$host$request_uri;
     }
 }
 EOF
@@ -85,7 +94,7 @@ User=pi
 Group=www-data
 WorkingDirectory=$APP_DIR
 Environment="PATH=$APP_DIR/venv/bin"
-ExecStart=$APP_DIR/venv/bin/gunicorn -w 4 -b 0.0.0.0:$APP_PORT main:app
+ExecStart=$APP_DIR/venv/bin/gunicorn -w 4 -b 127.0.0.1:8000 main:app
 
 [Install]
 WantedBy=multi-user.target
